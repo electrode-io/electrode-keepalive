@@ -1,6 +1,6 @@
 {
   "name": "electrode-keepalive",
-  "version": "1.0.0",
+  "version": "0.0.1",
   "description": "electrode-keepalive",
   "main": "lib/index.js",
   "scripts": {
@@ -29,7 +29,8 @@
     "node": ">= 4.2.2"
   },
   "dependencies": {
-    "electrode-confippet": "^1.2.10"
+    "electrode-confippet": "^1.2.10",
+    "in-publish": "^2.0.0"
   },
   "devDependencies": {
     "electrode-archetype-njs-module-dev": "^1.0.0",
