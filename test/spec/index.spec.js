@@ -23,5 +23,13 @@ describe("index", () => {
         done();
       });
     });
+
+    it("should return cached dnsName", () => {
+      const agent = httpAgent({});
+
+      agent.dnsCache.foo = "bar";
+      expect(agent.getName({host: "foo"})).to.equal("bar::");
+    });
+
   });
 });
