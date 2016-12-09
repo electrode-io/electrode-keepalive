@@ -33,14 +33,6 @@ describe("index", () => {
       expect(agent.getName({host: "foo"})).to.equal("bar::");
     });
 
-    it("should return cached dns entry", () => {
-      const expiry = 5000;
-      const agent = httpAgent({expiry: expiry});
-
-      agent.dnsCache.foo = {address: "bar", expiry: Date.now() + expiry};
-      expect(agent.getName({host: "foo"})).to.equal("bar::");
-    });
-
     it("should resolve dns when entry doesn't exist", () => {
       const agent = httpAgent({});
       agent.preLookup = sinon.stub();
