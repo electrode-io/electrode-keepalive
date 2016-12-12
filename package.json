@@ -2,7 +2,7 @@
   "name": "electrode-keepalive",
   "version": "0.0.1",
   "description": "electrode-keepalive",
-  "main": "lib/index.js",
+  "main": "lib/electrode-keepalive.js",
   "scripts": {
     "prepublish": "which in-publish && if in-publish; then gulp test; else echo not in publish; fi",
     "test": "gulp test",

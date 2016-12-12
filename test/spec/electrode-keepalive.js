@@ -4,6 +4,11 @@ const ElectrodeKeepAlive = require("../../lib/electrode-keepalive");
 const sa = require("superagent");
 
 describe("electrode-keepalive", () => {
+
+  it("should export a function", () => {
+    expect(ElectrodeKeepAlive).to.be.a("function");
+  });
+
   it("should expose the underlying agent", () => {
     const keepAlive = new ElectrodeKeepAlive({});
     const agent = keepAlive.getAgent();
