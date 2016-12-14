@@ -15,10 +15,10 @@ request({url: "http://www.google.com", agent: keepAlive.getAgent()});
 
 ### Options
 
-`ElectrodeKeepAlive` accepts the default http agent [settings](httpagentopts) that are passed through to the underlying implementation. Additionally the following options are supported:
+`ElectrodeKeepAlive` accepts the default http agent [settings] that are passed through to the underlying implementation. Additionally the following options are supported:
 
 ##### `expiry`
 The duration (in milliseconds) that ip entries will exist in cache. Default is 5000ms.
 
 
-[httpagentopts]: https://nodejs.org/api/http.html#http_new_agent_options
+[settings]: https://nodejs.org/api/http.html#http_new_agent_options
