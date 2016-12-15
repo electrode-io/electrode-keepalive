@@ -9,7 +9,7 @@ const ElectrodeKeepAlive = require("electrode-keepalive");
 
 const keepAlive = new ElectrodeKeepAlive(opts);
 
-request({url: "http://www.google.com", agent: keepAlive.getAgent()});
+request({url: "http://www.google.com", agent: keepAlive.agent});
 
 ```
 
@@ -18,6 +18,7 @@ request({url: "http://www.google.com", agent: keepAlive.getAgent()});
 `ElectrodeKeepAlive` accepts the default http agent [settings] that are passed through to the underlying implementation. Additionally the following options are supported:
 
 ##### `expiry`
+
 The duration (in milliseconds) that ip entries will exist in cache. Default is 5000ms.
 
 
