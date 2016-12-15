@@ -30,10 +30,10 @@ describe("electrode-keepalive", () => {
   it("should lookup hosts and populate dnsCache", (done) => {
     const keepAlive = new ElectrodeKeepAlive({});
 
-    keepAlive.preLookup("www.google.com", (err, address) => {
+    keepAlive.preLookup("www.google.com", (err, ip) => {
       expect(err).to.be.null;
-      expect(address).to.exist;
-      expect(ElectrodeKeepAlive.DNS_CACHE["www.google.com"].address).to.equal(address);
+      expect(ip).to.exist;
+      expect(keepAlive.getName({host: "www.google.com"})).to.contain(ip);
       done();
     });
   });
@@ -42,7 +42,7 @@ describe("electrode-keepalive", () => {
     const expiry = 5000;
     const keepAlive = new ElectrodeKeepAlive({expiry: expiry});
 
-    ElectrodeKeepAlive.DNS_CACHE.foo = {address: "bar", expiry: Date.now() + expiry};
+    ElectrodeKeepAlive.DNS_CACHE.foo = {ip: "bar", expiry: Date.now() + expiry};
     expect(keepAlive.agent.getName({host: "foo"})).to.equal("bar::");
   });
 
