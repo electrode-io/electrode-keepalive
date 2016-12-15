@@ -29,7 +29,6 @@
     "node": ">= 4.2.2"
   },
   "dependencies": {
-    "electrode-confippet": "^1.2.10",
     "in-publish": "^2.0.0"
   },
   "devDependencies": {
