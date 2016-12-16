@@ -3,6 +3,8 @@
 const ElectrodeKeepAlive = require("../../lib/electrode-keepalive");
 const sa = require("superagent");
 const sinon = require("sinon");
+const expect = require("chai").expect;
+const Promise = require("bluebird");
 
 describe("electrode-keepalive", () => {
   it("should expose the underlying agent", () => {
@@ -36,6 +38,45 @@ describe("electrode-keepalive", () => {
       expect(keepAlive.getName({host: "www.google.com"})).to.contain(ip);
       done();
     });
+  });
+
+  const testKeepAlive = (https) => {
+    const keepAlive = new ElectrodeKeepAlive({
+      https,
+      keepAlive: true,
+      keepAliveMsecs: 30000, // socket send keep alive ping every 30 secs
+      maxSockets: 100,
+      maxFreeSockets: 10
+    });
+    ElectrodeKeepAlive.clearDnsCache();
+    expect(ElectrodeKeepAlive.DNS_CACHE).to.be.empty;
+    const host = "www.google.com";
+    return new Promise((resolve, reject) => {
+      keepAlive.preLookup(host, (err) => {
+        if (err) {
+          return reject(err);
+        }
+        const url = `${https ? "https" : "http"}://${host}`;
+        resolve(sa.get(url).agent(keepAlive.agent).then(() => {
+          const agent = keepAlive.agent;
+          const name = keepAlive.getName({host, port: https ? 443 : 80});
+          const free = agent.freeSockets[name];
+          expect(free).to.be.array;
+        }));
+      });
+    })
+      .finally(() => {
+        ElectrodeKeepAlive.clearDnsCache();
+      });
+
+  };
+
+  it("should load with https", () => {
+    return testKeepAlive(true);
+  });
+
+  it("should load with http", () => {
+    return testKeepAlive(false);
   });
 
   it("should return cached dns entry", () => {

@@ -32,8 +32,9 @@
     "in-publish": "^2.0.0"
   },
   "devDependencies": {
+    "bluebird": "^3.4.6",
     "electrode-archetype-njs-module-dev": "^1.0.0",
-    "superagent": "^2.1.0",
-    "sinon": "^1.17.6"
+    "sinon": "^1.17.6",
+    "superagent": "^2.1.0"
   }
 }
