@@ -1,15 +1,22 @@
 # electrode-keepalive
 
-`electrode-keepalive` provides an HttpAgent capable of maintaining available sockets using IP address instead of hostname lookup. This allows for graceful handling of dns changes/failover when changes occur in routing configuration. This is particularly important when using keep-alive enabled connections.
-
-It resolves part of the problems in this [issue](https://github.com/nodejs/node/issues/6713)
+`electrode-keepalive` provides an HttpAgent capable of maintaining available sockets using IP address instead of hostname lookup. This allows for graceful handling of dns changes/failover when changes occur in routing configuration. This is particularly important when using keep-alive enabled connections.  It resolves part of the problems in this [issue](https://github.com/nodejs/node/issues/6713)
 
 ### Usage
 
 ```js
 const ElectrodeKeepAlive = require("electrode-keepalive");
 
+const opts = {
+  keepAlive: true,
+  keepAliveMsecs: 30000, // socket send keep alive ping every 30 secs
+  maxSockets: 100,
+  maxFreeSockets: 10
+};
+
 const keepAlive = new ElectrodeKeepAlive(opts);
+
+const dnsOptions = {};
 
 keepAlive.preLookup("www.google.com", dnsOptions, (err) => {
   request({url: "http://www.google.com", agent: keepAlive.agent});
@@ -25,7 +32,11 @@ keepAlive.preLookup("www.google.com", dnsOptions, (err) => {
 
 ### [agent](#agent)
 
-`instance.agent` - Read only instance property to access the http agent.
+`instance.agent` - Read only instance property to access the http/https agent.
+
+### [https](#https)
+
+`instance.https` - Read only instance property.  If true, then the agent is an https agent.
 
 ### [static DNS_CACHE](#static-dns_cache)
 
@@ -41,19 +52,24 @@ Creates an instance of `ElectrodeKeepAlive`.
 
   - `options` should be the default http agent [settings] that are passed through to the underlying implementation. Additionally the following options are supported:
 
+    - `https` - If true, then creates an https Agent.
     - `expiry` - The duration (in milliseconds) that ip entries in the DNS mapping will be refreshed. Default is 5000ms.
 
 ### [preLookup](#prelookup)
 
-`preLookup(host, options, callback)`
+`instance.preLookup(host, options, callback)`
 
 Allows `ElectrodeKeepAlive` to do a DNS lookup on the host first to populate its DNS mapping.  
 
 The arguments matches Node dns module lookup.
 
+### [clearDnsCache](#cleardnscache)
+
+`instance.clearDnsCache()` - Wipes out current DNS mapping.
+
 ### [getName](#getname)
 
-`getName(options)`
+`instance.getName(options)`
 
 The internal method to override http agent's default `getName`.  Not intended for public use.
 
