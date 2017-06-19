@@ -57,7 +57,7 @@ describe("electrode-keepalive", () => {
           return reject(err);
         }
         const url = `${https ? "https" : "http"}://${host}`;
-        resolve(sa.get(url).agent(keepAlive.agent).then(() => {
+        return resolve(sa.get(url).agent(keepAlive.agent).then(() => {
           const agent = keepAlive.agent;
           const name = keepAlive.getName({host, port: https ? 443 : 80});
           const free = agent.freeSockets[name];
