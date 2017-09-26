@@ -29,14 +29,17 @@
     "node": ">= 4.2.2"
   },
   "dependencies": {
+    "agentkeepalive": "3.3.0",
     "in-publish": "^2.0.0"
   },
   "devDependencies": {
     "bluebird": "^3.4.6",
     "electrode-archetype-njs-module-dev": "^2.2.0",
     "sinon": "^1.17.6",
-    "superagent": "^2.1.0",
-    "xclap-cli": "^0.1.1"
+    "superagent": "^2.1.0"
+  },
+  "xclap": {
+    "npm": true
   },
   "nyc": {
     "all": true,
@@ -51,11 +54,12 @@
       "gulpfile.js",
       "dist",
       "test"
-    ]
-  },
-  "xclap": {
-    "__options": {
-      "npm": true
-    }
+    ],
+    "check-coverage": true,
+    "statements": 100,
+    "branches": 100,
+    "functions": 100,
+    "lines": 100,
+    "cache": true
   }
 }
