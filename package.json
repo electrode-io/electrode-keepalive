@@ -29,7 +29,7 @@
     "node": ">= 4.2.2"
   },
   "dependencies": {
-    "agentkeepalive": "3.3.0",
+    "humanize-ms": "^1.2.1",
     "in-publish": "^2.0.0"
   },
   "devDependencies": {
@@ -53,7 +53,8 @@
       "*clap.js",
       "gulpfile.js",
       "dist",
-      "test"
+      "test",
+      "agentkeepalive"
     ],
     "check-coverage": true,
     "statements": 100,
