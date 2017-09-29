@@ -74,11 +74,9 @@ describe("electrode-keepalive", () => {
         );
       });
     }).finally(() => {
-      const entry = ElectrodeKeepAlive.DNS_CACHE[host];
       ElectrodeKeepAlive.clearDnsCache();
-      expect(lookupSpy.callCount).to.equal(2);
+      expect(lookupSpy.callCount).to.equal(1);
       expect(lookupSpy.args[0][0]).to.equal(host);
-      expect(lookupSpy.args[1][0]).to.equal(entry.ip);
       lookupSpy.restore();
     });
   };
