@@ -90,7 +90,9 @@ function Agent(options) {
       // If there are no pending requests, then put it in
       // the freeSockets pool, but only if we're allowed to do so.
       var req = socket._httpMessage;
-      if (req &&
+      // [electrode patch begin]
+      if (options._keepIt && req &&
+      // [electrode patch end]
           req.shouldKeepAlive &&
           socket.writable &&
           self.keepAlive) {
