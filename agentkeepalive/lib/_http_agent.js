@@ -149,6 +149,27 @@ function freeSocketErrorListener(err) {
 
 Agent.defaultMaxSockets = Infinity;
 
+// [electrode patch begin]
+var MarkCopied = Symbol("_http_agent mark copied options");
+
+Agent.prototype._copyOptions = function _copyOptions(req, options) {
+  if (options[MarkCopied]) return options;
+
+  options = util._extend({ [MarkCopied]: true }, options);
+  options = util._extend(options, this.options);
+
+  if (!options.servername) {
+    options.servername = options.host;
+    const hostHeader = req.getHeader('host');
+    if (hostHeader) {
+      options.servername = hostHeader.replace(/:.*$/, '');
+    }
+  }
+
+  return options;
+};
+// [electrode patch end]
+
 Agent.prototype.createConnection = net.createConnection;
 
 // Get the key for a given set of request options
@@ -195,16 +216,9 @@ Agent.prototype.addRequest = function addRequest(req, options) {
     };
   }
 
-  options = util._extend({}, options);
-  options = util._extend(options, this.options);
-
-  if (!options.servername) {
-    options.servername = options.host;
-    const hostHeader = req.getHeader('host');
-    if (hostHeader) {
-      options.servername = hostHeader.replace(/:.*$/, '');
-    }
-  }
+  // [electrode patch begin]
+  options = this._copyOptions(req, options);
+  // [electrode patch end] 
 
   var name = this.getName(options);
   if (!this.sockets[name]) {
@@ -265,16 +279,10 @@ Agent.prototype.addRequest = function addRequest(req, options) {
 
 Agent.prototype.createSocket = function createSocket(req, options, cb) {
   var self = this;
-  options = util._extend({}, options);
-  options = util._extend(options, self.options);
 
-  if (!options.servername) {
-    options.servername = options.host;
-    const hostHeader = req.getHeader('host');
-    if (hostHeader) {
-      options.servername = hostHeader.replace(/:.*$/, '');
-    }
-  }
+  // [electrode patch begin]
+  options = this._copyOptions(req, options);
+  // [electrode patch end]
 
   var name = self.getName(options);
   options._agentKey = name;
