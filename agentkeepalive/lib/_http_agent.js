@@ -105,8 +105,12 @@ function Agent(options) {
         if (count > self.maxSockets || freeLen >= self.maxFreeSockets) {
           socket.destroy();
         } else {
-          freeSockets = freeSockets || [];
-          self.freeSockets[name] = freeSockets;
+          // [electrode patch begin]
+          // clearer and simpler if check
+          if (!freeSockets) {
+            self.freeSockets[name] = freeSockets = [];
+          }
+          // [electrode patch end]
           socket.setKeepAlive(true, self.keepAliveMsecs);
           socket.unref();
           socket._httpMessage = null;
@@ -212,7 +216,15 @@ Agent.prototype.addRequest = function addRequest(req, options) {
 
   if (freeLen) {
     // we have a free socket, so use that.
-    var socket = this.freeSockets[name].shift();
+    // [electrode patch begin]
+    //
+    // Use the most recently freed one (LIFO rather than FIFO).  This is OK since
+    // we are now tracking by IP so all sockets are to the same machine.  This
+    // will avoid continuous traffic from keeping all free sockets refreshed and
+    // never timeout
+    //
+    var socket = this.freeSockets[name].pop();
+    // [electrode patch end]
     debug('have free socket');
 
     // [patch start]
