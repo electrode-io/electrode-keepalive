@@ -42,18 +42,16 @@ describe("electrode-keepalive", () => {
     });
   });
 
-  const testKeepAlive = (https, noPreLookup) => {
-    const lookupSpy = sinon.spy(dns, "lookup");
-    const keepAlive = new ElectrodeKeepAlive({
-      https,
-      keepAlive: true,
-      keepAliveMsecs: 30000, // socket send keep alive ping every 30 secs
-      maxSockets: 100,
-      maxFreeSockets: 10
-    });
-    expect(Boolean(keepAlive.https)).to.equal(Boolean(https));
+  const testKeepAlive = (opts, noPreLookup) => {
     ElectrodeKeepAlive.clearDnsCache();
+
+    const keepAlive = new ElectrodeKeepAlive(opts);
+    const https = Boolean(opts && opts.https);
+
+    expect(Boolean(keepAlive.https)).to.equal(https);
     expect(ElectrodeKeepAlive.DNS_CACHE).to.be.empty;
+
+    const lookupSpy = sinon.spy(dns, "lookup");
     const host = "www.google.com";
     const promise = noPreLookup
       ? Promise.resolve()
@@ -83,22 +81,22 @@ describe("electrode-keepalive", () => {
 
   it("should load with https", () => {
     ElectrodeKeepAlive.clearDnsCache();
-    return testKeepAlive(true);
+    return testKeepAlive({ https: true });
   });
 
   it("should load with http", () => {
     ElectrodeKeepAlive.clearDnsCache();
-    return testKeepAlive(false);
+    return testKeepAlive();
   });
 
   it("should load with https without pre lookup", () => {
     ElectrodeKeepAlive.clearDnsCache();
-    return testKeepAlive(true, true);
+    return testKeepAlive({ https: true }, true);
   });
 
   it("should load with http without pre lookup", () => {
     ElectrodeKeepAlive.clearDnsCache();
-    return testKeepAlive(false, true);
+    return testKeepAlive({ https: false }, true);
   });
 
   it("should return cached dns entry", () => {

@@ -8,24 +8,9 @@ It also uses the patched [agentkeepalive] to support destorying kept alive socke
 
 ```js
 const ElectrodeKeepAlive = require("electrode-keepalive");
-
-const opts = {
-  keepAlive: true,
-  keepAliveMsecs: 30000, // socket send keep alive ping every 30 secs
-  maxSockets: 100,
-  maxFreeSockets: 10
-};
-
-const keepAlive = new ElectrodeKeepAlive(opts);
-
-const dnsOptions = {};
-
-keepAlive.preLookup("www.google.com", dnsOptions, (err) => {
-  request({url: "http://www.google.com", agent: keepAlive.agent});
-});
+const keepAlive = new ElectrodeKeepAlive();
+request({url: "http://www.google.com", agent: keepAlive.agent});
 ```
-
-> Since this module works by overriding `http.Agent`'s synchronous `getName` method to return the IP instead of hostname, it has to use a pre-populated DNS mapping.  Before the mapping is populated, it can't use IP.  To avoid that in your first request, you should always call the `preLookup` method first.
 
 # APIs
 
@@ -41,7 +26,7 @@ keepAlive.preLookup("www.google.com", dnsOptions, (err) => {
 
 ### [static DNS_CACHE](#static-dns_cache)
 
-`ElectrodeKeepAlive.DNS_CACHE` - Internal DNS mapping object.
+`ElectrodeKeepAlive.DNS_CACHE` - Internal DNS cache mapping object.
 
 ## Methods
 
@@ -67,7 +52,8 @@ Creates an instance of `ElectrodeKeepAlive`.
 
 `instance.preLookup(host, options, callback)`
 
-Allows `ElectrodeKeepAlive` to do a DNS lookup on the host first to populate its DNS mapping.  
+This method is used to do DNS lookup to translate host name into IP for tracking free sockets.
+It will also populate `ElectrodeKeepAlive` DNS cache.
 
 The arguments matches Node dns module lookup.
 
@@ -84,3 +70,9 @@ The internal method to override http agent's default `getName`.  Not intended fo
 [settings]: https://nodejs.org/api/http.html#http_new_agent_options
 
 [agentkeepalive]: https://github.com/node-modules/agentkeepalive
+
+### [getNameAsync](#getnameasync)
+
+`instance.getNameAsync(options, callback)`
+
+Async version of [getName](#getname).
