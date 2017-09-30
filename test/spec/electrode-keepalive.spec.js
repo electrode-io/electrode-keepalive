@@ -42,7 +42,7 @@ describe("electrode-keepalive", () => {
     });
   });
 
-  const testKeepAlive = https => {
+  const testKeepAlive = (https, noPreLookup) => {
     const lookupSpy = sinon.spy(dns, "lookup");
     const keepAlive = new ElectrodeKeepAlive({
       https,
@@ -55,38 +55,50 @@ describe("electrode-keepalive", () => {
     ElectrodeKeepAlive.clearDnsCache();
     expect(ElectrodeKeepAlive.DNS_CACHE).to.be.empty;
     const host = "www.google.com";
-    return new Promise((resolve, reject) => {
-      keepAlive.preLookup(host, err => {
-        if (err) {
-          return reject(err);
-        }
-        const url = `${https ? "https" : "http"}://${host}`;
-        return resolve(
-          sa
-            .get(url)
-            .agent(keepAlive.agent)
-            .then(() => {
-              const agent = keepAlive.agent;
-              const name = keepAlive.getName({ host, port: https ? 443 : 80 });
-              const free = agent.freeSockets[name];
-              expect(free).to.be.array;
-            })
+    const promise = noPreLookup
+      ? Promise.resolve()
+      : new Promise((resolve, reject) =>
+          keepAlive.preLookup(host, err => (err ? reject(err) : resolve()))
         );
+    return promise
+      .then(() => {
+        const url = `${https ? "https" : "http"}://${host}`;
+        return sa
+          .get(url)
+          .agent(keepAlive.agent)
+          .then(() => {
+            const agent = keepAlive.agent;
+            const name = keepAlive.getName({ host, port: https ? 443 : 80 });
+            const free = agent.freeSockets[name];
+            expect(free).to.be.array;
+          });
+      })
+      .finally(() => {
+        lookupSpy.restore();
+        ElectrodeKeepAlive.clearDnsCache();
+        expect(lookupSpy.callCount).to.equal(1);
+        expect(lookupSpy.args[0][0]).to.equal(host);
       });
-    }).finally(() => {
-      ElectrodeKeepAlive.clearDnsCache();
-      expect(lookupSpy.callCount).to.equal(1);
-      expect(lookupSpy.args[0][0]).to.equal(host);
-      lookupSpy.restore();
-    });
   };
 
   it("should load with https", () => {
+    ElectrodeKeepAlive.clearDnsCache();
     return testKeepAlive(true);
   });
 
   it("should load with http", () => {
+    ElectrodeKeepAlive.clearDnsCache();
     return testKeepAlive(false);
+  });
+
+  it("should load with https without pre lookup", () => {
+    ElectrodeKeepAlive.clearDnsCache();
+    return testKeepAlive(true, true);
+  });
+
+  it("should load with http without pre lookup", () => {
+    ElectrodeKeepAlive.clearDnsCache();
+    return testKeepAlive(false, true);
   });
 
   it("should return cached dns entry", () => {
@@ -106,18 +118,21 @@ describe("electrode-keepalive", () => {
     expect(keepAlive.preLookup).to.have.been.calledWith("foo2");
   });
 
-  it("getName should avoid expired entries", done => {
+  it("getName should avoid expired entries and call lookup on it", done => {
     ElectrodeKeepAlive.clearDnsCache();
     const dc = ElectrodeKeepAlive.DNS_CACHE;
     dc.test = { expiry: Date.now() + 10, ip: "1234" };
     setTimeout(() => {
       const eka = new ElectrodeKeepAlive();
-      const preLookup = sinon.stub(eka, "preLookup");
+      const lookup = sinon.stub(dns, "lookup", (host, opts, cb) => cb(null, "99999", "test"));
       const options = { host: "test" };
       eka.getName(options);
+      lookup.restore();
+      expect(lookup.callCount).to.equal(1);
       expect(options.host).to.equal("test");
-      expect(preLookup.callCount).to.equal(1);
-      preLookup.restore();
+      expect(dc.test.ip).to.equal("99999");
+      expect(dc.test.addressType).to.equal("test");
+      expect(dc.test.expiry).to.above(Date.now());
       done();
     }, 20);
   });
@@ -130,24 +145,35 @@ describe("electrode-keepalive", () => {
     const preLookup = sinon.stub(eka, "preLookup");
     const options = { host: "test", localAddress: "foo", family: 6 };
     const name = eka.getName(options);
+    preLookup.restore();
     expect(name).to.equal("1234::foo:6");
     expect(options.host).to.equal("1234");
     expect(preLookup.callCount).to.equal(0);
-    preLookup.restore();
+  });
+
+  it("getNameAsync should handle lookup error", done => {
+    ElectrodeKeepAlive.clearDnsCache();
+    const eka = new ElectrodeKeepAlive();
+    const preLookup = sinon.stub(eka, "preLookup", (host, options, cb) => cb(new Error("blah")));
+    eka.getNameAsync({ host: "blah" }, (err, name) => {
+      preLookup.restore();
+      expect(name).to.equal("blah::");
+      done();
+    });
   });
 
   it("preLookup should handle dns lookup error", () => {
     ElectrodeKeepAlive.clearDnsCache();
     const eka = new ElectrodeKeepAlive();
-    const preLookup = sinon.stub(dns, "lookup", (host, opts, cb) => {
+    const lookup = sinon.stub(dns, "lookup", (host, opts, cb) => {
       cb(new Error("bummer"));
     });
     let error;
     eka.preLookup("test", { hints: 1 }, err => {
       error = err;
     });
+    lookup.restore();
     expect(error.message).to.equal("bummer");
-    preLookup.restore();
   });
 
   it("should init expired DNS checker", done => {

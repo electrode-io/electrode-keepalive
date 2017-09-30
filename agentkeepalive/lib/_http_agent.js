@@ -220,7 +220,9 @@ Agent.prototype.addRequest = function addRequest(req, options) {
   options = this._copyOptions(req, options);
   // [electrode patch end] 
 
-  var name = this.getName(options);
+  // [electrode patch begin]
+this.getNameAsync(options, (err, name) => {
+  // [electrode patch end]
   if (!this.sockets[name]) {
     this.sockets[name] = [];
   }
@@ -275,6 +277,9 @@ Agent.prototype.addRequest = function addRequest(req, options) {
     }
     this.requests[name].push(req);
   }
+  // [electrode patch begin]
+});
+  // [electrode patch end]
 };
 
 Agent.prototype.createSocket = function createSocket(req, options, cb) {
@@ -284,7 +289,9 @@ Agent.prototype.createSocket = function createSocket(req, options, cb) {
   options = this._copyOptions(req, options);
   // [electrode patch end]
 
-  var name = self.getName(options);
+  // [electrode patch begin]
+self.getNameAsync(options, (err, name) => {
+  // [electrode patch end]
   options._agentKey = name;
 
   debug('createConnection', name, options);
@@ -358,6 +365,9 @@ Agent.prototype.createSocket = function createSocket(req, options, cb) {
     s.on('agentRemove', onRemove);
     cb(null, s);
   }
+  // [electrode patch begin]
+});
+  // [electrode patch end]
 };
 
 Agent.prototype.removeSocket = function removeSocket(s, options) {
