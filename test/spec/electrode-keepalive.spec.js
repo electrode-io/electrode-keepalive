@@ -174,10 +174,9 @@ describe("electrode-keepalive", () => {
     expect(error.message).to.equal("bummer");
   });
 
-  it("should init expired DNS checker", done => {
-    clearInterval(ElectrodeKeepAlive.expiredDnsChecker);
-    ElectrodeKeepAlive.expiredDnsChecker = undefined;
+  it("should delete expired DNS checker", done => {
     ElectrodeKeepAlive.clearDnsCache();
+    ElectrodeKeepAlive.checkExpiredDnsInterval = 20;
     const dc = ElectrodeKeepAlive.DNS_CACHE;
     const now = Date.now();
     dc.a = { expiry: now + 5000 };
@@ -187,8 +186,9 @@ describe("electrode-keepalive", () => {
     dc.d3 = { expiry: now };
     dc.d4 = { expiry: now };
     dc.x2 = { expiry: now + 2000 };
-    const eka = new ElectrodeKeepAlive({ checkExpiredDnsInterval: 20 }); // eslint-disable-line
     setTimeout(() => {
+      const eka = new ElectrodeKeepAlive();
+      eka.preLookup("www.google.com", {});
       expect(dc).to.have.keys("a", "x1", "x2");
       done();
     }, 30);
