@@ -103,8 +103,12 @@ describe("electrode-keepalive", () => {
     const expiry = 5000;
     const keepAlive = new ElectrodeKeepAlive({ expiry: expiry });
 
-    ElectrodeKeepAlive.DNS_CACHE.foo = { ip: "bar", expiry: Date.now() + expiry };
-    expect(keepAlive.agent.getName({ host: "foo" })).to.equal("bar::");
+    ElectrodeKeepAlive.DNS_CACHE.foo = {
+      ip: "bar",
+      host: "foo",
+      expiry: Date.now() + expiry
+    };
+    expect(keepAlive.agent.getName({ host: "foo" })).to.equal("foo+ip:bar");
   });
 
   it("should resolve dns when entry doesn't exist", () => {
@@ -112,7 +116,7 @@ describe("electrode-keepalive", () => {
     keepAlive.preLookup = sinon.stub();
 
     const name = keepAlive.agent.getName({ host: "foo2" });
-    expect(name).to.equal("foo2::");
+    expect(name).to.equal("foo2+ip:_none_");
     expect(keepAlive.preLookup).to.have.been.calledWith("foo2");
   });
 
@@ -122,7 +126,9 @@ describe("electrode-keepalive", () => {
     dc.test = { expiry: Date.now() + 10, ip: "1234" };
     setTimeout(() => {
       const eka = new ElectrodeKeepAlive();
-      const lookup = sinon.stub(dns, "lookup", (host, opts, cb) => cb(null, "99999", "test"));
+      const lookup = sinon.stub(dns, "lookup", (host, opts, cb) =>
+        cb(null, "99999", "test")
+      );
       const options = { host: "test" };
       eka.getName(options);
       lookup.restore();
@@ -138,13 +144,13 @@ describe("electrode-keepalive", () => {
   it("getName should add localAddress and family", () => {
     ElectrodeKeepAlive.clearDnsCache();
     const dc = ElectrodeKeepAlive.DNS_CACHE;
-    dc.test = { expiry: Date.now() + 5000, ip: "1234" };
+    dc.test = { expiry: Date.now() + 5000, ip: "1234", host: "test" };
     const eka = new ElectrodeKeepAlive();
     const preLookup = sinon.stub(eka, "preLookup");
     const options = { host: "test", localAddress: "foo", family: 6 };
     const name = eka.getName(options);
     preLookup.restore();
-    expect(name).to.equal("1234::foo:6");
+    expect(name).to.equal("test+ip:1234+localAddress:foo+family:6");
     expect(options.host).to.equal("1234");
     expect(preLookup.callCount).to.equal(0);
   });
@@ -152,10 +158,12 @@ describe("electrode-keepalive", () => {
   it("getNameAsync should handle lookup error", done => {
     ElectrodeKeepAlive.clearDnsCache();
     const eka = new ElectrodeKeepAlive();
-    const preLookup = sinon.stub(eka, "preLookup", (host, options, cb) => cb(new Error("blah")));
+    const preLookup = sinon.stub(eka, "preLookup", (host, options, cb) =>
+      cb(new Error("blah"))
+    );
     eka.getNameAsync({ host: "blah" }, (err, name) => {
       preLookup.restore();
-      expect(name).to.equal("blah::");
+      expect(name).to.equal("blah+ip:_none_");
       done();
     });
   });
