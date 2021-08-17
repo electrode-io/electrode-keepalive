@@ -1,12 +1,12 @@
 {
   "name": "electrode-keepalive",
-  "version": "0.3.5",
+  "version": "0.3.6",
   "description": "electrode-keepalive",
   "main": "lib/electrode-keepalive.js",
   "scripts": {
     "test": "clap electrode/test",
     "coverage": "clap electrode/check",
-    "prepublishOnly": "npm run coverage && npm run publish-util-prepublishonly",
+    "prepublishOnly": "npm run coverage && publish-util-prepublishonly",
     "postpack": "publish-util-postpack"
   },
   "repository": {
