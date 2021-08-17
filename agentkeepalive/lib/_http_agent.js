@@ -151,6 +151,30 @@ function freeSocketErrorListener(err) {
 
 Agent.defaultMaxSockets = Infinity;
 
+// https://github.com/node-modules/agentkeepalive/pull/53
+function calculateServerName(options, req) {
+  let servername = options.host;
+  const hostHeader = req.getHeader('host');
+  if (hostHeader) {
+    // abc => abc
+    // abc:123 => abc
+    // [::1] => ::1
+    // [::1]:123 => ::1
+    if (hostHeader.startsWith('[')) {
+      const index = hostHeader.indexOf(']');
+      if (index === -1) {
+        // Leading '[', but no ']'. Need to do something...
+        servername = hostHeader;
+      } else {
+        servername = hostHeader.substr(1, index - 1);
+      }
+    } else {
+      servername = hostHeader.split(':', 1)[0];
+    }
+  }
+  return servername;
+}
+
 // [electrode patch begin]
 var MarkCopied = Symbol("_http_agent mark copied options");
 
@@ -161,11 +185,7 @@ Agent.prototype._copyOptions = function _copyOptions(req, options) {
   options = util._extend(options, this.options);
 
   if (!options.servername) {
-    options.servername = options.host;
-    const hostHeader = req.getHeader('host');
-    if (hostHeader) {
-      options.servername = hostHeader.replace(/:.*$/, '');
-    }
+    options.servername = calculateServerName(options, req);
   }
 
   return options;
