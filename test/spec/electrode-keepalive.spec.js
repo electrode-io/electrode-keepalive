@@ -7,17 +7,19 @@ const sinon = require("sinon");
 const expect = require("chai").expect;
 const Promise = require("bluebird");
 const dns = require("dns");
+const { KEEP_IT } = require("../../lib/symbols");
+const SchedulingAgent = require("../../lib/scheduling-agent");
 
-describe("electrode-keepalive", () => {
+const tests = scheduling => {
   it("should expose the underlying agent", () => {
-    const keepAlive = new ElectrodeKeepAlive({});
+    const keepAlive = new ElectrodeKeepAlive({}, scheduling);
     const agent = keepAlive.agent;
 
     expect(agent).to.exist;
   });
 
   it("agent should fetch requests", () => {
-    const keepAlive = new ElectrodeKeepAlive({});
+    const keepAlive = new ElectrodeKeepAlive({}, scheduling);
     const httpAgent = keepAlive.agent;
 
     const request = sa.get("www.google.com");
@@ -27,12 +29,12 @@ describe("electrode-keepalive", () => {
   });
 
   it("should provide a preLookup function", () => {
-    const keepAlive = new ElectrodeKeepAlive({});
+    const keepAlive = new ElectrodeKeepAlive({}, scheduling);
     expect(keepAlive.preLookup).to.be.a("function");
   });
 
   it("should lookup hosts and populate dnsCache", done => {
-    const keepAlive = new ElectrodeKeepAlive({});
+    const keepAlive = new ElectrodeKeepAlive({}, scheduling);
 
     keepAlive.preLookup("www.google.com", (err, ip) => {
       expect(err).to.be.null;
@@ -45,7 +47,7 @@ describe("electrode-keepalive", () => {
   const testKeepAlive = (opts, noPreLookup) => {
     ElectrodeKeepAlive.clearDnsCache();
 
-    const keepAlive = new ElectrodeKeepAlive(opts);
+    const keepAlive = new ElectrodeKeepAlive(opts, scheduling);
     const https = Boolean(opts && opts.https);
 
     expect(Boolean(keepAlive.https)).to.equal(https);
@@ -101,7 +103,7 @@ describe("electrode-keepalive", () => {
 
   it("should return cached dns entry", () => {
     const expiry = 5000;
-    const keepAlive = new ElectrodeKeepAlive({ expiry: expiry });
+    const keepAlive = new ElectrodeKeepAlive({ expiry: expiry }, scheduling);
 
     ElectrodeKeepAlive.DNS_CACHE.foo = {
       ip: "bar",
@@ -112,7 +114,7 @@ describe("electrode-keepalive", () => {
   });
 
   it("should resolve dns when entry doesn't exist", () => {
-    const keepAlive = new ElectrodeKeepAlive({});
+    const keepAlive = new ElectrodeKeepAlive({}, scheduling);
     keepAlive.preLookup = sinon.stub();
 
     const name = keepAlive.agent.getName({ host: "foo2" });
@@ -125,7 +127,7 @@ describe("electrode-keepalive", () => {
     const dc = ElectrodeKeepAlive.DNS_CACHE;
     dc.test = { expiry: Date.now() + 10, ip: "1234" };
     setTimeout(() => {
-      const eka = new ElectrodeKeepAlive();
+      const eka = new ElectrodeKeepAlive(undefined, scheduling);
       const lookup = sinon.stub(dns, "lookup", (host, opts, cb) =>
         cb(null, "99999", "test")
       );
@@ -157,7 +159,7 @@ describe("electrode-keepalive", () => {
 
   it("getNameAsync should handle lookup error", done => {
     ElectrodeKeepAlive.clearDnsCache();
-    const eka = new ElectrodeKeepAlive();
+    const eka = new ElectrodeKeepAlive(undefined, scheduling);
     const preLookup = sinon.stub(eka, "preLookup", (host, options, cb) =>
       cb(new Error("blah"))
     );
@@ -168,9 +170,18 @@ describe("electrode-keepalive", () => {
     });
   });
 
+  it("getNameAsync with options._agentKey should set options[KEEP_IT] if it's missing", done => {
+    const eka = new ElectrodeKeepAlive(undefined, scheduling);
+    const options = { _agentKey: "test" };
+    eka.getNameAsync(options, () => {
+      expect(options[KEEP_IT]).equal(true);
+      done();
+    });
+  });
+
   it("preLookup should handle dns lookup error", () => {
     ElectrodeKeepAlive.clearDnsCache();
-    const eka = new ElectrodeKeepAlive();
+    const eka = new ElectrodeKeepAlive(undefined, scheduling);
     const lookup = sinon.stub(dns, "lookup", (host, opts, cb) => {
       cb(new Error("bummer"));
     });
@@ -195,10 +206,44 @@ describe("electrode-keepalive", () => {
     dc.d4 = { expiry: now };
     dc.x2 = { expiry: now + 2000 };
     setTimeout(() => {
-      const eka = new ElectrodeKeepAlive();
+      const eka = new ElectrodeKeepAlive(undefined, scheduling);
       eka.preLookup("www.google.com", {});
       expect(dc).to.have.keys("a", "x1", "x2");
       done();
     }, 30);
+  });
+};
+
+describe("electrode-keepalive without scheduling", function () {
+  tests(false);
+});
+
+describe("electrode-keepalive with scheduling", function () {
+  if (SchedulingAgent.HAS_SCHEDULING) {
+    tests(true);
+
+    it("should return agent with hasScheduling equal true", () => {
+      const eka = new ElectrodeKeepAlive(undefined, true);
+      expect(eka.agent.hasScheduling).equal(true);
+      const httpsEka = new ElectrodeKeepAlive({ https: true }, true);
+      expect(httpsEka.agent.hasScheduling).equal(true);
+    });
+  }
+});
+
+describe("checkScheduling", function () {
+  it("should return false for major < 12", () => {
+    expect(SchedulingAgent.checkScheduling(11)).equal(false);
+  });
+
+  it("should return false for major 12 minor < 20", () => {
+    expect(SchedulingAgent.checkScheduling(12, 19)).equal(false);
+  });
+
+  it("should return false for major >= 13", () => {
+    expect(SchedulingAgent.checkScheduling(13)).equal(true);
+    expect(SchedulingAgent.checkScheduling(14, 0)).equal(true);
+    expect(SchedulingAgent.checkScheduling(15, 1)).equal(true);
+    expect(SchedulingAgent.checkScheduling(16)).equal(true);
   });
 });

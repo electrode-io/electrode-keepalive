@@ -34,6 +34,7 @@
     "node": ">= 4.2.2"
   },
   "dependencies": {
+    "agentkeepalive": "4.1.4",
     "humanize-ms": "^1.2.1"
   },
   "devDependencies": {
