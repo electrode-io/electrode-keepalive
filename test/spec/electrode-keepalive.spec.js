@@ -8,7 +8,7 @@ const expect = require("chai").expect;
 const Promise = require("bluebird");
 const dns = require("dns");
 const { KEEP_IT } = require("../../lib/symbols");
-const SchedulingAgent = require("../../lib/scheduling-agent");
+const check = require("../../lib/check");
 
 const tests = scheduling => {
   it("should expose the underlying agent", () => {
@@ -219,7 +219,7 @@ describe("electrode-keepalive without scheduling", function () {
 });
 
 describe("electrode-keepalive with scheduling", function () {
-  if (SchedulingAgent.HAS_SCHEDULING) {
+  if (check.HAS_SCHEDULING) {
     tests(true);
 
     it("should return agent with hasScheduling equal true", () => {
@@ -233,17 +233,17 @@ describe("electrode-keepalive with scheduling", function () {
 
 describe("checkScheduling", function () {
   it("should return false for major < 12", () => {
-    expect(SchedulingAgent.checkScheduling(11)).equal(false);
+    expect(check.checkScheduling(11)).equal(false);
   });
 
   it("should return false for major 12 minor < 20", () => {
-    expect(SchedulingAgent.checkScheduling(12, 19)).equal(false);
+    expect(check.checkScheduling(12, 19)).equal(false);
   });
 
   it("should return false for major >= 13", () => {
-    expect(SchedulingAgent.checkScheduling(13)).equal(true);
-    expect(SchedulingAgent.checkScheduling(14, 0)).equal(true);
-    expect(SchedulingAgent.checkScheduling(15, 1)).equal(true);
-    expect(SchedulingAgent.checkScheduling(16)).equal(true);
+    expect(check.checkScheduling(13)).equal(true);
+    expect(check.checkScheduling(14, 0)).equal(true);
+    expect(check.checkScheduling(15, 1)).equal(true);
+    expect(check.checkScheduling(16)).equal(true);
   });
 });
