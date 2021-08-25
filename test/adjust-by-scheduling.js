@@ -1,8 +1,8 @@
 const Path = require("path");
 const Fs = require("fs");
-const SchedulingAgent = require("../lib/scheduling-agent");
+const check = require("../lib/check");
 
-if (!SchedulingAgent.HAS_SCHEDULING) {
+if (!check.HAS_SCHEDULING) {
   const pkg = require("../package.json");
 
   pkg.nyc.exclude.push("lib/scheduling-agent.js");
