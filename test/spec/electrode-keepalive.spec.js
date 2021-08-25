@@ -232,18 +232,17 @@ describe("electrode-keepalive with scheduling", function () {
 });
 
 describe("checkScheduling", function () {
-  it("should return false for major < 12", () => {
-    expect(check.checkScheduling(11)).equal(false);
+  const p = process.versions.node.split(".");
+  const major = parseInt(p[0]);
+  const minor = parseInt(p[1]);
+
+  const hasScheduling = major > 12 || (major === 12 && minor >= 20);
+
+  it("should return scheduling feature by version", () => {
+    expect(check.HAS_SCHEDULING).equal(hasScheduling);
   });
 
-  it("should return false for major 12 minor < 20", () => {
-    expect(check.checkScheduling(12, 19)).equal(false);
-  });
-
-  it("should return false for major >= 13", () => {
-    expect(check.checkScheduling(13)).equal(true);
-    expect(check.checkScheduling(14, 0)).equal(true);
-    expect(check.checkScheduling(15, 1)).equal(true);
-    expect(check.checkScheduling(16)).equal(true);
+  it("should return false for Agent that ignore scheduling option", () => {
+    expect(check.checkScheduling(function () {})).equal(false);
   });
 });
