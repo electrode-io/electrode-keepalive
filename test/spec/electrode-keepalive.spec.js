@@ -114,7 +114,10 @@ const tests = scheduling => {
   });
 
   it("should resolve dns when entry doesn't exist", () => {
-    const keepAlive = new ElectrodeKeepAlive({}, scheduling);
+    const keepAlive = new ElectrodeKeepAlive(
+      { freeSocketKeepAliveTimeout: 50000 },
+      scheduling
+    );
     keepAlive.preLookup = sinon.stub();
 
     const name = keepAlive.agent.getName({ host: "foo2" });
