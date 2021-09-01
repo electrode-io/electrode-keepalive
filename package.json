@@ -1,6 +1,6 @@
 {
   "name": "electrode-keepalive",
-  "version": "0.3.10",
+  "version": "0.3.11",
   "description": "electrode-keepalive",
   "main": "lib/electrode-keepalive.js",
   "scripts": {
